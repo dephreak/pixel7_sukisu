@@ -2,7 +2,6 @@ name: Build Google Pixel 7 Kernel
 
 on:
   workflow_dispatch:       # run manually from the Actions tab
-  # you can also add:
   # push:
   #   branches: [ main ]
 
@@ -16,7 +15,7 @@ jobs:
       MANIFEST_BRANCH: android-gs-pantah-6.1-android16
 
     steps:
-      - name: Checkout this repo (workflows/README/etc.)
+      - name: Checkout this repo
         uses: actions/checkout@v4
 
       - name: Install dependencies and repo tool
@@ -40,12 +39,12 @@ jobs:
           repo init -u "$MANIFEST_URL" -b "$MANIFEST_BRANCH" --depth=1
           repo sync -c --no-tags --jobs=4
 
-      - name: Build Pixel 7 kernel (cloudripper)
+      - name: Build Pixel 7 kernel (pantah)
         run: |
           cd $HOME/google-kernel
-          # tell Google’s build system to build AOSP kernel (not prebuilt)
+          # build core kernel from source, not prebuilt
           export BUILD_AOSP_KERNEL=1
-          ./build_cloudripper.sh
+          ./build_pantah.sh
 
       - name: Upload kernel artifacts
         uses: actions/upload-artifact@v4
