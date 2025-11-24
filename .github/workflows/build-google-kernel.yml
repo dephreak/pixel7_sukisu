@@ -11,7 +11,8 @@ jobs:
       MANIFEST_URL: https://android.googlesource.com/kernel/manifest
       # Pixel 7 / 7 Pro, Tensor G2, 6.1 kernel, Android 16
       MANIFEST_BRANCH: android-gs-pantah-6.1-android16
-      KERNEL_ROOT: ${{ runner.temp }}/google-kernel
+      # We'll sync the Google kernel tree here:
+      KERNEL_ROOT: ${{ github.workspace }}/google-kernel
 
     steps:
       - name: Checkout this repo
@@ -45,8 +46,7 @@ jobs:
           export BUILD_AOSP_KERNEL=1
           ./build_pantah.sh
 
-      # Optional debug: list out directory so you can see what's there
-      - name: List out directory
+      - name: List out directory (debug)
         run: |
           cd "$KERNEL_ROOT"
           echo "===== out/ tree (depth 3) ====="
@@ -56,6 +56,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pixel7-kernel-dist
-          # For v5.15+ Pixel kernels: out/DEVICE/dist, here DEVICE=pantah
+          # For pantah, DIST_DIR should be out/pantah/dist
           path: ${{ env.KERNEL_ROOT }}/out/pantah/dist/*
           if-no-files-found: error
