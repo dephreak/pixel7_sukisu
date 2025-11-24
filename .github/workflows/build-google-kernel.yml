@@ -1,0 +1,56 @@
+name: Build Google Pixel 7 Kernel
+
+on:
+  workflow_dispatch:       # run manually from the Actions tab
+  # you can also add:
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      MANIFEST_URL: https://android.googlesource.com/kernel/manifest
+      # Pixel 7 / 7 Pro, Tensor G2, 6.1 kernel, Android 16
+      MANIFEST_BRANCH: android-gs-pantah-6.1-android16
+
+    steps:
+      - name: Checkout this repo (workflows/README/etc.)
+        uses: actions/checkout@v4
+
+      - name: Install dependencies and repo tool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git curl python3 \
+              build-essential bc flex bison libssl-dev \
+              lz4 zstd unzip
+
+          mkdir -p "$HOME/bin"
+          curl https://storage.googleapis.com/git-repo-downloads/repo \
+            -o "$HOME/bin/repo"
+          chmod a+x "$HOME/bin/repo"
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Sync Google Pixel 7 kernel tree via repo
+        run: |
+          mkdir -p $HOME/google-kernel
+          cd $HOME/google-kernel
+
+          repo init -u "$MANIFEST_URL" -b "$MANIFEST_BRANCH" --depth=1
+          repo sync -c --no-tags --jobs=4
+
+      - name: Build Pixel 7 kernel (cloudripper)
+        run: |
+          cd $HOME/google-kernel
+          # tell Google’s build system to build AOSP kernel (not prebuilt)
+          export BUILD_AOSP_KERNEL=1
+          ./build_cloudripper.sh
+
+      - name: Upload kernel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixel7-kernel-dist
+          path: |
+            $HOME/google-kernel/out/**/dist/*
+          if-no-files-found: error
